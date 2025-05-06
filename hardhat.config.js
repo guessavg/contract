@@ -1,7 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
-const { PRIVATE_KEY, BASE_RPC_URL, LOCAL_RPC_URL } = process.env;
+const { PRIVATE_KEY, BASE_RPC_URL, LOCAL_RPC_URL, BASE_KEY } = process.env;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -16,4 +16,12 @@ module.exports = {
       accounts: [PRIVATE_KEY],
     },
   },
+  etherscan: {
+    apiKey: {
+      base: BASE_KEY
+    }
+  },
+  sourcify: {
+    enabled: true
+  }
 };
