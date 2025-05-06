@@ -1,71 +1,85 @@
-# 🧠 Guess Two-Thirds Game – A Web3 Game of Strategy
+# 🧠 Guess Two‑Thirds Game – A Web3 Game of Strategy
 
-This is a decentralized application (dApp) implementation of the classic **Guess Two-Thirds of the Average** game, deployed on the Ethereum blockchain.
+This repository contains a decentralized implementation of the classic **Guess Two‑Thirds of the Average** game, running on the Ethereum blockchain.
 
-Players participate by sending any amount of ETH. The player whose contribution is **closest to 2/3 of the average** wins the entire prize pool (minus a 1% fee). The game ends **randomly**, making it unpredictable and fair.
+Players join by sending any amount of ETH. When the round ends, the player whose contribution is **closest to  2 / 3  of the average** wins the entire prize pool (minus a 1 % owner fee).  
+The stop‑condition is pseudo‑random and **parametrised on deployment**, so the game designer can decide how quickly a round should finish (e.g. 2–3 players, 5–10 players, etc.).
+
+---
 
 ## 🎮 Game Rules
 
-- Players can join the game by sending **any positive amount** of ETH.
-- Each address can **only participate once** per game.
-- Once the game ends, the winner is determined by:
-  - Calculating the **average** of all submitted amounts.
-  - Taking **2/3 of the average** as the target.
-  - The player whose amount is **closest to the target** wins.
-  - If there's a tie, the **earliest participant** wins.
+- Join by sending **any positive amount** of ETH.
+- Each address may **participate only once per round**.
+- When the round ends:
+  1. Compute the **average** of all submitted amounts.  
+  2. Take **2 / 3  of that average** as the target.  
+  3. The player whose amount is **closest to the target** wins.  
+  4. If there is a tie, the **earliest participant** wins.
 
-### 🕹️ Game End Condition
+### 🕹️ How the Game Ends
 
-- A pseudo-random mechanism determines when the game ends:
-  - A number `x ∈ [10, 100]` is generated.
-  - Based on the number of participants `n`, a range `[n - x, n + x]` is calculated.
-  - If a randomly generated number within this range equals `n`, the game ends.
-- This ensures the game usually ends between 10 and 100 players.
+- At deployment you choose `minX` and `maxX` (both ≥ 1, `minX ≤ maxX`).  
+- For every new participant count `n`, the contract draws  
+  `x  ∈  [minX, maxX]` using on‑chain randomness (`block.prevrandao` & block hash).
+- The game **cannot** end before `x` players have joined.  
+- After that, another pseudo‑random draw decides whether the current `n` is the final count.  
+- With `minX = 2, maxX = 3` (recommended for demos), a round typically ends within 6–9 players.
+
+---
 
 ## 📜 Smart Contract
 
-The main contract is `GuessTwoThirdsGame.sol`, which includes:
+Main file: `contracts/GuessTwoThirdsGame.sol`
 
-- Player registration and payment handling.
-- Randomized game-ending logic using `block.prevrandao` and `blockhash`.
-- Winner calculation and payout distribution.
-- 1% service fee sent to the contract owner.
+Features:
 
-The contract uses:
+- Player registration, payment handling, and “one‑address‑one‑entry” guard.
+- Constructor **`GuessTwoThirdsGame(uint256 minX, uint256 maxX)`** sets the early‑stop range.
+- Pseudo‑random end logic based on `block.prevrandao` and `blockhash`.
+- Automatic prize/fee distribution (1 % fee to `owner`).
+- Written in **Solidity ^0.8.19** – uses OpenZeppelin’s `ReentrancyGuard`.
 
-- Solidity `^0.8.19`
-- OpenZeppelin’s `ReentrancyGuard` for safety
+---
 
 ## 🧪 Testing
 
-This project uses [Hardhat](https://hardhat.org/) and [Ethers.js](https://docs.ethers.org/) for testing.
+This project uses [Hardhat] and [Ethers.js].
 
-Run tests with:
+Run the full suite with:
 
 ```
 npx hardhat test
 ```
 
-Tests include:
+Tests check:
 
-- Single player participation
-- Prevention of duplicate participation
-- Game-ending and winner announcement with randomized end logic
+- Single‑player participation
+- Rejection of duplicate participation
+- Round termination and winner determination under the new, quicker stop‑condition
+
+---
 
 ## 🚀 Deployment
 
-You can deploy the contract using Hardhat:
+Deploy with the Hardhat script, passing `minX` and `maxX` on the command line:
 
 ```
-npx hardhat run scripts/deploy.js --network <network-name>
+npx hardhat run --network <network-name> scripts/deploy.js <minX> <maxX>
 ```
 
-Make sure your `scripts/deploy.js` is configured correctly with your contract factory and signer.
+Example (2–3 player threshold on Sepolia):
+
+```
+npx hardhat run --network sepolia scripts/deploy.js 2 3
+```
+
+---
 
 ## 📂 Project Structure
 
 ```
-guess-2-3-contract/
+guess-two-thirds-game/
 │
 ├── contracts/
 │   └── GuessTwoThirdsGame.sol     # Main game contract
@@ -74,11 +88,13 @@ guess-2-3-contract/
 │   └── GuessTwoThirdsGame.js      # Mocha/Chai test suite
 │
 ├── scripts/
-│   └── deploy.js                  # Deployment script
+│   └── deploy.js                  # Deployment script (takes minX, maxX)
 │
 ├── hardhat.config.js              # Hardhat configuration
-└── package.json                   # Project dependencies and scripts
+└── package.json                   # Dependencies and scripts
 ```
+
+---
 
 ## 📦 Dependencies
 
@@ -87,10 +103,14 @@ npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox
 npm install @openzeppelin/contracts
 ```
 
+---
+
 ## 🧠 Inspiration
 
-This project is based on a well-known behavioral game theory experiment known as **Guess 2/3 of the Average**, adapted to the blockchain with fair randomness and public verifiability.
+The contract brings the classic experimental‑economics game **“Guess 2 / 3 of the Average”** to Web3, ensuring fairness through on‑chain pseudo‑randomness and public verifiability.
+
+---
 
 ## 🛡️ License
 
-This project is open-sourced under the [MIT License](LICENSE).
+Distributed under the [MIT License](./LICENSE).

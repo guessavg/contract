@@ -3,12 +3,17 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("GuessTwoThirdsGame", function () {
+  const MIN_X = 2;   // smallest early‑stop threshold
+  const MAX_X = 3;   // largest  early‑stop threshold
+
   let game, owner, player1, player2, player3;
 
   beforeEach(async () => {
     const Game = await ethers.getContractFactory("GuessTwoThirdsGame");
     [owner, player1, player2, player3] = await ethers.getSigners();
-    game = await Game.deploy();
+
+    // 🔹 Pass constructor parameters here
+    game = await Game.deploy(MIN_X, MAX_X);
   });
 
   it("allows a player to join", async () => {
@@ -19,7 +24,7 @@ describe("GuessTwoThirdsGame", function () {
     expect(await game.hasPlayed(player1.address)).to.be.true;
   });
 
-  it("rejects duplicate participation from same address", async () => {
+  it("rejects duplicate participation from the same address", async () => {
     await game.connect(player1).play({ value: ethers.parseEther("1") });
 
     await expect(
@@ -35,11 +40,11 @@ describe("GuessTwoThirdsGame", function () {
 
     let ended = false;
 
-    // Keep adding *fresh* wallets until the game stops (hard‑limit 500)
+    // Keep adding fresh wallets until the game stops (hard‑limit 500)
     for (let i = 0; i < 500 && !ended; ++i) {
       const wallet = ethers.Wallet.createRandom().connect(ethers.provider);
 
-      // Fund the wallet from the owner so it can pay gas + stake
+      // Fund the wallet so it can pay gas + stake
       await owner.sendTransaction({
         to: wallet.address,
         value: ethers.parseEther("3"),
@@ -56,7 +61,7 @@ describe("GuessTwoThirdsGame", function () {
           const parsed = game.interface.parseLog(log);
           if (parsed && parsed.name === "GameEnded") {
             console.log(
-              `✅ Game ended after ${await game.gameId()} rounds – winner ${
+              `✅ Game ended in round ${await game.gameId()} – winner ${
                 parsed.args.winner
               } got ${ethers.formatEther(parsed.args.reward)} ETH`
             );
